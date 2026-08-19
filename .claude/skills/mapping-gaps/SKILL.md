@@ -24,15 +24,19 @@ outputs; do not "fix" it.
 
 ## 2. Understand each unmapped name
 
-Fetch the reserved registry once:
+Fetch the live registry, which also carries operator-defined
+canonicals already bound on this Herder:
 
 ```bash
-curl -s https://docs.herder.ispx.co/schemas/reserved-canonicals.json
+curl -s "$HERDER_API/api/v1/mapping/canonicals" \
+  -H "Authorization: Bearer $HERDER_TOKEN"
 ```
 
-It gives `valueType` (enforced at sync), `feature`, and a description
-per name. A mapping entry with the wrong `valueType` rejects the whole
-table.
+(The reserved half is also published statically at
+https://docs.herder.ispx.co/schemas/reserved-canonicals.json when the
+API is out of reach.) Each name carries `valueType` (enforced at
+sync), `feature`, and a description. A mapping entry with the wrong
+`valueType` rejects the whole table.
 
 ## 3. Find candidate paths
 

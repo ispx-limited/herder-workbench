@@ -38,8 +38,13 @@ with candidate paths and table skeletons.
 In the config fork, `vendors/<name>/`, modelled on `vendors/arris/`:
 
 - **MappingProfile** named `<vendor>-<family>`: selector on the `oui`
-  label plus `productClass` values, priority 50 or higher, listing the
-  baseline tables that fit plus the new vendor tables.
+  label plus `productClass` values, priority 50 or higher (highest
+  priority number wins), listing the baseline tables that fit plus the
+  new vendor tables. **Binding is single-profile: the winning
+  profile's table list is the device's complete mapping vocabulary.**
+  A vendor profile that names only its own tables strips the device of
+  every baseline binding, connection-request URL included; restate
+  each baseline table the device still needs.
 - **MappingTables** from step 2.
 - **TelemetryProfile** for vendor parameters worth streaming
   (per-client RSSI extensions, mesh trees). Vendor priority beats the
@@ -56,7 +61,11 @@ the profile and its tables reads better than five fragments.
 
 Before any commit, per document, against the domain named by the
 kind's registry entry (`domain` in
-https://docs.herder.ispx.co/schemas/kinds.json):
+https://docs.herder.ispx.co/schemas/kinds.json). Look the domain up
+for every kind; never infer it from the group name. The trap that
+catches everyone: `EnrichmentRule` lives in the `telemetry_enrichment`
+domain, not `telemetry`, and validating against the wrong domain
+reports the kind as undeclared.
 
 ```bash
 curl -s -X POST "$HERDER_API/api/v1/config/mapping/validate" \
@@ -80,10 +89,27 @@ Passing `name` matters: the validator overlays the buffer on the
 stored bundle, so cross-file breakage (a YAML referencing the script,
 another table colliding on a name) surfaces now instead of at sync.
 
-## 5. Ship and verify
+One overlay limit to know: only the one buffer overlays. A document
+referencing a script that is new in the same change reports the
+script as missing until the source has synced both files; validate
+the script buffer by itself (that works), and re-run the document's
+validation after the sync. `GET /api/v1/config/sources` shows
+per-domain sync status when in doubt.
 
-Commit, push, let the config source sync. Then re-read coverage for a
-device of the tuple:
+## 5. Ship, then verify the binding flipped
+
+Commit, push, let the config source sync. Coverage says what
+resolves; the binding says which profile won and why, and it is the
+first thing to check after the sync:
+
+```bash
+curl -s "$HERDER_API/api/v1/devices/<device_id>/mapping-binding" \
+  -H "Authorization: Bearer $HERDER_TOKEN"
+```
+
+If the baseline still binds, the usual causes are priority (highest
+number wins) and a selector that does not match the device's labels.
+Then re-read coverage for a device of the tuple:
 
 ```bash
 curl -s "$HERDER_API/api/v1/devices/<device_id>/canonical-coverage" \
