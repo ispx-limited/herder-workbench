@@ -120,3 +120,10 @@ The mapped names report `bound`. What is still `unmapped` is the
 honest remaining list; shipping incrementally is the intended shape.
 Report to the operator: what was bound, what the device cannot do, and
 any candidate you were unsure of.
+
+## Protocol note
+
+Check `protocols` on the device row in step 0. The flow above is
+protocol-agnostic; where CWMP and USP genuinely diverge (discovery,
+task delivery, telemetry shape, firmware), the divergence is noted in
+the skill that owns that stage.

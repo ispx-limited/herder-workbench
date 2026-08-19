@@ -106,3 +106,15 @@ Report: the tuple, parameter count and truncation, the data-model root
 writable clusters relevant to the four product priorities: management
 credentials, WiFi, diagnostics, firmware. This summary is the input to
 the `mapping-gaps` skill.
+
+## USP devices are surveyed differently
+
+Everything above is the CWMP path. A device with `protocols: {usp}`
+needs none of it: the MTP session (MQTT or WebSocket) is persistent
+and bidirectional, so there are no connection requests, no inform
+intervals to wait out, and tasks deliver immediately. Discovery is
+native: the agent itself reports its supported data model
+(GetSupportedDM), so the manual walk fallback is a CWMP concern that
+does not arise. USP trees are always `Device.*` (TR-181). These notes
+are grounded in the platform's USP dispatch, not yet in a live
+workbench run; treat them as the map, not the territory.
