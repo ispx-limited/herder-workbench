@@ -28,6 +28,11 @@ Load-bearing terms, used consistently:
   usually checked out as a sibling of this directory. Ask where it is
   if you cannot find it.
 
+The API is self-describing: `GET $HERDER_API/api/openapi.json` is the
+complete, current surface. When a skill's named endpoints are not
+enough (a task to inspect, a connection request to fire, a binding to
+check), read the spec rather than guessing paths.
+
 ## The flow
 
 An unknown CPE that informs already works partially: baseline profiles

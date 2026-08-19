@@ -30,24 +30,46 @@ curl -s -X POST "$HERDER_API/api/v1/schema/discover" \
 ```
 
 Discovery is scoped to the identity tuple, not the device: one walk
-serves every identical CPE. Two answers are normal and good:
+serves every identical CPE. A `409 CONFLICT` with "discovery already
+pending" means a walk is queued or running; not an error.
 
-- `409 CONFLICT` with "discovery already pending": a walk is queued or
-  running. Not an error; proceed to polling.
-- A device without a working connection request path picks the task up
-  on its next periodic Inform, so allow at least one inform interval
-  before concluding anything failed.
+## 3. Watch the task, not just the models list
 
-## 3. Poll for the model
+Discovery is delivered as a `GetParameterNames` task, and the task is
+where the truth is. Follow it, and kick a session rather than waiting
+out the inform interval:
 
 ```bash
-curl -s "$HERDER_API/api/v1/schema/models" \
+curl -s "$HERDER_API/api/v1/tasks?device_id=<uuid>&limit=5" \
+  -H "Authorization: Bearer $HERDER_TOKEN"
+curl -s -X POST "$HERDER_API/api/v1/devices/<uuid>/connection-request" \
   -H "Authorization: Bearer $HERDER_TOKEN"
 ```
 
-Wait until a row matches the tuple. Note `parameter_count` and
-`truncated`: a truncated walk means the tree is bigger than what was
-stored, and conclusions about "the device does not have X" are unsafe.
+Task states: `pending` waits for a session, `dispatched` means a
+connection request went out, `completed` means the model should appear
+in `/api/v1/schema/models` shortly. A device whose connection request
+path does not work picks tasks up on its next periodic Inform instead,
+so budget at least one inform interval. Poll with a background
+until-loop, never with long sleeps.
+
+When the model lands, note `parameter_count` and `truncated`: a
+truncated walk means the tree is bigger than what was stored, and
+conclusions about "the device does not have X" are unsafe.
+
+## 3a. When discovery fails: walk it yourself
+
+Some real CPEs refuse or silently drop a full-root
+`GetParameterNames`; large trees (10,000+ parameters) are where it
+happens. The symptom is the discovery task ending `failed` with a
+recovery-budget error while smaller tasks against the same device
+complete fine. The fallback is a level-by-level walk you drive through
+the tasks API: create `GetParameterNames` tasks per object path with
+`next_level` semantics, batch them (25 or so), fire one
+connection-request per batch, and accumulate paths and writability
+until no unwalked objects remain. A 14,000-parameter tree walks this
+way in minutes. Keep the result as your survey artifact; the stored
+device parameters from normal sessions supplement it.
 
 ## 4. Browse what matters
 
