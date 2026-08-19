@@ -65,3 +65,10 @@ First real campaign: a selector no wider than a handful of devices
 (a tag works), watched to completion, before the model joins fleet
 campaigns. Simulated fleets cannot stand in here; flashing is the one
 flow containers structurally cannot verify.
+
+## USP note
+
+USP firmware rides Operate rather than the CWMP Download RPC;
+`baseline/usp/firmware-operations.yaml` in the config repo is the
+worked example. Identity exactness, selector proving, and
+one-device-before-any-cohort apply unchanged.

@@ -82,3 +82,11 @@ table should fill. Vendor scan trees carry quirks (fields that read
 "Auto" instead of numbers, radio selectors that do nothing); record
 what the hardware actually did as comments in the profile, the way
 the existing scan profiles do.
+
+## USP note
+
+On USP devices telemetry is subscription-driven rather than polled:
+the profile shape differs, and `baseline/usp/wifi-realtime.yaml` in
+the config repo is the worked example to model on. The client-table
+hunt, the vendor-extension search, and the idle-client zeros trap
+apply unchanged.
