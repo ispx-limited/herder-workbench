@@ -24,8 +24,8 @@ curl -s "$HERDER_API/api/v1/devices?limit=5&search=<serial>" \
 ```
 
 A common shape in the field: a base version with an operator-specific
-suffix, `9.5.0h4d131_EXAMPLE` where the vendor builds per ISP. An
-image catalogued as `9.5.0h4d131` against a fleet reporting the
+suffix, `7.2.1b3405_EXAMPLE` where the vendor builds per ISP. An
+image catalogued as `7.2.1b3405` against a fleet reporting the
 suffixed string re-flashes on every campaign rerun. Catalogue the
 exact string the device reports, and if `model` or firmware arrive
 empty or mangled, fix identity first (an IdentityProfile in the
