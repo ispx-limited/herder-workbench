@@ -104,8 +104,29 @@ Report: the tuple, parameter count and truncation, the data-model root
 (`Device.` vs `InternetGatewayDevice.`), every vendor prefix found
 (`X_<OUI>_`, `X_<NAME>_`) with the subtrees it appears under, and the
 writable clusters relevant to the four product priorities: management
-credentials, WiFi, diagnostics, firmware. This summary is the input to
-the `mapping-gaps` skill.
+credentials, WiFi, diagnostics, firmware.
+
+Then the feature inventory, one line per platform feature, stating
+whether the device has the standard object, a vendor tree instead, or
+neither. It is what the operator chooses from in `onboard-vendor`:
+
+- Interfaces: the Ethernet interface table, and which instance has
+  `Upstream=true` (TR-181) or is the WAN object (TR-098).
+- WiFi clients: the associated-device table and where the signal leaf
+  is (`SignalStrength`, or an `X_*` leaf).
+- Network map: `WiFi.MultiAP`, `WiFi.DataElements`, a vendor mesh
+  table, or hosts only.
+- WiFi scan: `NeighboringWiFiDiagnostic`, or a vendor survey tree with
+  its own `DiagnosticsState`.
+- Port forwards: `NAT.PortMapping` or the TR-098 `PortMapping` table.
+- Remote access: `UserInterface.RemoteAccess`, the account table the
+  remote UI authenticates against, and any vendor ACL, timeout or
+  status leaves.
+- Diagnostics: which `IP.Diagnostics.*` and TR-143 objects exist.
+- Firmware: the exact `SoftwareVersion` string as reported.
+
+This summary is the input to the `mapping-gaps` skill and to the
+scoping question.
 
 ## USP devices are surveyed differently
 

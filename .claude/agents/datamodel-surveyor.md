@@ -25,7 +25,11 @@ structured summary. You are given a device id, `HERDER_API`, and
 Return, as your final message: the identity tuple; total parameter
 and object counts and whether anything was truncated or failed; the
 data-model root; every vendor prefix found (`X_*`) with the subtrees
-it appears under and rough counts; and the writable clusters relevant
-to management credentials, WiFi, diagnostics, and firmware. Include
-the path of the walk file so the main session can query it. Report
-numbers you measured, never estimates.
+it appears under and rough counts; the writable clusters relevant
+to management credentials, WiFi, diagnostics, and firmware; and the
+feature inventory the `survey-datamodel` skill's step 5 lists
+(interfaces and which is upstream, WiFi clients and where the signal
+leaf is, mesh objects, scan objects, port mappings, remote access
+and its account table, diagnostics, the exact firmware string).
+Include the path of the walk file so the main session can query it.
+Report numbers you measured, never estimates.

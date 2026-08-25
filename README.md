@@ -17,7 +17,15 @@ yourself.
 ## What you need
 
 - A running Herder and an API token for it. The API base URL and token
-  are read from `HERDER_API` and `HERDER_TOKEN` throughout.
+  are read from `HERDER_API` and `HERDER_TOKEN` throughout, so export
+  them before starting the agent:
+
+  ```bash
+  export HERDER_API=https://acs.example.net
+  export HERDER_TOKEN=<your API token>
+  ```
+
+  An agent started without them asks for them.
 - Your fork of herder-public-configs, wired as a config source.
 - The CPE, connected. Real hardware, or a container: the
   [cpe-labs](https://github.com/ispx-limited/cpe-labs) fleet simulator
@@ -29,9 +37,12 @@ yourself.
 | Path | What it is |
 |------|------------|
 | `CLAUDE.md` | Agent context: vocabulary, the flow, the rules |
-| `.claude/skills/onboard-vendor/` | The end-to-end integration workflow |
+| `.claude/skills/onboard-vendor/` | The end-to-end integration workflow, with the feature menu the operator chooses from |
 | `.claude/skills/survey-datamodel/` | Discover and summarize what a device exposes |
 | `.claude/skills/mapping-gaps/` | Coverage gaps to mapping-table skeletons |
+| `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
+| `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
+| `.claude/agents/datamodel-surveyor.md` | A background agent that runs the survey while the session writes |
 
 ## What this is not
 

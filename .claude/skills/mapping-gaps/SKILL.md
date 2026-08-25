@@ -22,6 +22,14 @@ Grouped by feature; each canonical is `bound`, `unreported`, or
 binding exists and no value has arrived, which is normal for test
 outputs; do not "fix" it.
 
+Coverage lists the reserved vocabulary only, and a standard tree
+usually binds all of it through the baseline. The operator-defined
+namespaces the device page runs on (`canonical.interface.*`,
+`canonical.wifi.*`, `canonical.nat.*`, `canonical.mgmt.remote_access.*`)
+are not in this report: their gaps show as an empty ports view, a
+module field that does not resolve, a scan that cannot start. The
+feature recipes in `onboard-vendor` say where to look for each.
+
 ## 2. Understand each unmapped name
 
 Fetch the live registry, which also carries operator-defined

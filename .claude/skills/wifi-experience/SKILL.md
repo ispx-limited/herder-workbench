@@ -62,23 +62,66 @@ If the raw values are zeros, the verification needs a live client
 actually using the network near the AP; report that as the blocker
 instead of rewriting a working rule.
 
-## 4. The neighbour scan
+## 4. The network map
+
+The topology view is built by an EnrichmentRule that emits nodes and
+edges (`topology.addNode`, `topology.addEdge`,
+`topology.addEdgeMetric` in `types/sdk.d.ts`). `platform/topology/`
+covers `WiFi.MultiAP` and `WiFi.DataElements` and the hosts table; a
+vendor that keeps its mesh under its own table (ARRIS HNC, ASUS
+AiMesh) needs its own rule, modelled on
+`vendors/arris/hnc-topology.yaml` and `arris-hnc.ts`:
+
+- The gateway node's id is a MAC read from the device, never made
+  up: the mesh table's own entry for the router, or the LAN
+  interface's MAC.
+- One `extender` node per vendor node with a `wifi_backhaul` or
+  `ethernet` edge to the gateway, and the backhaul signal as
+  `rssi_dbm` on that edge.
+- One `client` node per station in the vendor's per-node client
+  table, edged to the node that serves it and typed by band; hostname
+  and address joined from `Hosts.Host` by MAC.
+- `triggerPaths` name paths that only a full GPV batch carries (the
+  mesh table itself), so a small periodic Inform does not run the
+  script against an event with no anchors.
+
+Rules all run, highest priority first; a vendor rule at 100 beside the
+platform ones is the shipped shape. Verify with
+`GET /api/v1/devices/<device_id>/topology` after a session that
+carried the mesh paths: the node count is the mesh table's, not one.
+
+## 5. The neighbour scan
 
 Vendors without `Device.WiFi.NeighboringWiFiDiagnostic` hide the site
 survey behind a vendor tree (ARRIS: `X_0000C5_Wireless.
-NeighboringWiFiDiagnostic`). That is an ActionProfile, not telemetry:
-a scan takes the radio off channel, so it must be operator-invoked,
-never polled. Model on the wifi-scan action profiles in the config
-repo's `platform/actions/`, selector scoped to the vendor tuple, and
-verify by running the action end to end:
+NeighboringWiFiDiagnostic`; ASUS: `WiFi.X_ASUS_SiteSurvey`). That is
+an ActionProfile, not telemetry: a scan takes the radio off channel,
+so it must be operator-invoked, never polled. Three documents, and
+only the right-hand sides are vendor-specific:
+
+- A MappingTable that mirrors the left-hand side of
+  `baseline/tr181/wifi-scan.yaml` (state, result count, per-result
+  bssid, ssid, channel, rssi, band, bandwidth) with the vendor paths
+  on the right, listed in the vendor MappingProfile in place of the
+  standard scan table. Without it `canonical.wifi.scan.state`
+  resolves to nothing and the action cannot start.
+- An ActionProfile modelled on `platform/actions/wifi-scan-arris.yaml`:
+  same `set` and `await` on the canonical, `collect` naming the vendor
+  subtree, priority above the standard profile's 10, selector on the
+  vendor tuple.
+- A normalizer copied from `wifi-scan-arris.ts` with `ROOT` and
+  `method` changed.
+
+Verify by running the action end to end:
 
 ```bash
 curl -s -X POST "$HERDER_API/api/v1/devices/<device_id>/actions/wifi_scan" \
   -H "Authorization: Bearer $HERDER_TOKEN" -H 'Content-Type: application/json' -d '{}'
 ```
 
-DiagnosticsState should walk Requested to Complete and the results
-table should fill. Vendor scan trees carry quirks (fields that read
+Follow the run at `GET /api/v1/action-runs/<run_id>`: DiagnosticsState
+should walk Requested to Complete and the result should carry a
+neighbour count. Vendor scan trees carry quirks (fields that read
 "Auto" instead of numbers, radio selectors that do nothing); record
 what the hardware actually did as comments in the profile, the way
 the existing scan profiles do.
