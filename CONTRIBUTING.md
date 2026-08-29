@@ -3,7 +3,7 @@
 Wanted: corrections where a skill's instructions have drifted from the
 Herder API, and sharpening that makes a step less ambiguous for an
 agent. New skills are welcome when they cover a real integration task
-the existing three do not.
+the existing ones do not.
 
 There is nothing to build. Test a change by running the skill it
 touches against a live Herder: every API call in these files is meant

@@ -24,6 +24,12 @@ Load-bearing terms, used consistently:
 
 - `HERDER_API`: base URL of the Herder API, e.g. `https://acs.example.net`.
 - `HERDER_TOKEN`: an API token; send it as `Authorization: Bearer`.
+- Check both before the first API call (`echo "$HERDER_API"`). If
+  either is unset, stop and ask the operator for it. Exporting them
+  in the shell before starting is the clean way; if the operator
+  gives them in chat, use the values inline in every call for the
+  rest of the session, because shell state does not persist between
+  commands.
 - The operator's config repository: a fork of herder-public-configs,
   usually checked out as a sibling of this directory. Ask where it is
   if you cannot find it.
@@ -40,17 +46,21 @@ resolve standard paths. Integration is closing the gap, and it is
 config work in the operator's Git fork, never a code change:
 
 1. **Survey** what the device exposes (skill: `survey-datamodel`).
-2. **Read the gaps**: which reserved canonicals are unmapped, per
+2. **Scope with the operator**: put the survey's feature inventory to
+   them and ask which features to wire now (the menu is in
+   `onboard-vendor`). Write only what they chose.
+3. **Read the gaps**: which reserved canonicals are unmapped, per
    feature (skill: `mapping-gaps`).
-3. **Write** the `vendors/<name>/` directory: a MappingProfile scoped
+4. **Write** the `vendors/<name>/` directory: a MappingProfile scoped
    to the vendor tuple, MappingTables binding canonicals to the vendor
-   paths, a TelemetryProfile for what is worth streaming, optionally a
-   DeviceProfile and provisioning. Model on `vendors/arris/` in
+   paths, then the recipe for each chosen feature (telemetry, labels,
+   topology, scan, modules, compliance). Model on `vendors/arris/` in
    herder-public-configs.
-4. **Validate every buffer** through the API before committing (the
+5. **Validate every buffer** through the API before committing (the
    `onboard-vendor` skill has the exact calls). Scripts are TypeScript
    against `types/sdk.d.ts` in the config repo.
-5. **Ship by Git** and verify coverage flipped to bound.
+6. **Ship by Git**, verify the binding flipped, then prove each chosen
+   feature against the device.
 
 The full narrative is the Vendor Onboarding guide:
 https://docs.herder.ispx.co/guides/vendor-onboarding/
