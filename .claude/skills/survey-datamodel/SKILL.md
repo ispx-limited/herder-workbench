@@ -98,6 +98,77 @@ curl -s "$HERDER_API/api/v1/schema/parameters/suggest?prefix=Device.WiFi.SSID&li
 `writable` in suggest results is true if the path is writable on any
 known model.
 
+## 4a. Bulk data capability
+
+TR-157 Annex A, carried as `Device.BulkData.` or
+`InternetGatewayDevice.BulkData.`, has the CPE collect on a schedule and
+push reports out of band instead of answering questions during a
+session. Support varies enough between vendors that it has to be read
+off the device.
+
+The metrics worth collecting this way have a fixed path, no retention on
+the device, and a value that moves between informs: interface counters,
+CPU and memory, optical levels. A table the device already buckets and
+retains, which some vendors do for per-client WiFi statistics, is better
+read on demand than streamed.
+
+Six read-only parameters at the root answer whether it is available:
+
+```bash
+curl -s "$HERDER_API/api/v1/devices/<uuid>/parameters?path=InternetGatewayDevice.BulkData." \
+  -H "Authorization: Bearer $HERDER_TOKEN"
+```
+
+- `Protocols` and `EncodingTypes`. `HTTP` with `JSON` is the workable
+  pair. A device offering only `Streaming` or `File` with `XML` or `XDR`
+  is an IPDR integration, which is a different job.
+- `MinReportingInterval`, the floor in seconds.
+- `MaxNumberOfProfiles` and `MaxNumberOfParameterReferences`, the two
+  hard limits. `-1` means unlimited.
+- `ParameterWildCardSupported`. Read the next section before drawing a
+  conclusion from it.
+
+Read these from the device, not from a published data model or a vendor
+XML export. Those carry a `default` for the flag, and a default is what
+an object is created with, not what the hardware answers.
+
+### Wildcards and object paths are not the same thing
+
+`Profile.{i}.Parameter.{i}.Reference` takes either a full parameter path
+or an object path ending in `.`. An object path collects the whole
+subtree, every instance and every contained parameter, resolved by the
+CPE at collection time. That is ungated, and it works whether or not the
+device supports wildcards. It is also what makes bulk data tolerate
+tables whose instances come and go.
+
+`ParameterWildCardSupported` governs only `*` in place of an instance
+identifier. When it is false a reference cannot collapse an index in the
+middle of a path, so `WLANConfiguration.*.AssociatedDevice.` is rejected
+while `WLANConfiguration.1.AssociatedDevice.` is accepted.
+
+So with wildcards off you can collect every parameter of a table whose
+instances churn, or specific parameters at a fixed index, but not
+specific parameters across a churning table.
+
+### Which paths are safe to name
+
+Sort every path the integration wants into three tiers:
+
+1. **Fixed and stable across the model.** The WAN interface and its
+   stats object. Name it directly.
+2. **Fixed, but decided per model or firmware.** WLAN instance numbers,
+   and which `WANIPConnection` instance carries the live connection.
+   Stable for one identity tuple and not across tuples, so it belongs in
+   the vendor's mapping tables rather than a shared profile. A profile
+   that names an instance the model does not have faults 9005 every
+   session and loses that data quietly.
+3. **Churning.** Associated devices, hosts, anything keyed on something
+   that joins and leaves. Never enumerate these.
+
+Reference the object path at the lowest object whose parent index is
+stable. Tier 2 decides how many references you write, tier 3 rides
+inside them.
+
 ## 5. Summarize
 
 Report: the tuple, parameter count and truncation, the data-model root
@@ -112,6 +183,9 @@ neither. It is what the operator chooses from in `onboard-vendor`:
 
 - Interfaces: the Ethernet interface table, and which instance has
   `Upstream=true` (TR-181) or is the WAN object (TR-098).
+- Bulk data: whether `BulkData.` exists, the transports and encodings
+  it advertises, the reporting floor, and whether wildcards are
+  supported.
 - WiFi clients: the associated-device table and where the signal leaf
   is (`SignalStrength`, or an `X_*` leaf).
 - Network map: `WiFi.MultiAP`, `WiFi.DataElements`, a vendor mesh
