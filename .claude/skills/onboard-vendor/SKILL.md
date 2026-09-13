@@ -24,6 +24,32 @@ curl -s "$HERDER_API/api/v1/devices?limit=5&search=<serial>" \
   -H "Authorization: Bearer $HERDER_TOKEN"
 ```
 
+### When the device is not in the list
+
+Herder registers a CPE only after authenticating it, so a unit that
+informs but never appears was refused. Ask the operator how the
+vendor's units authenticate, and what they want to admit:
+
+| The units ship with | What admits them |
+|---------------------|------------------|
+| One password on every unit | a factory rule in the deployment's `CWMP_AUTH_FACTORY_FILE`, or an AuthPolicy bootstrap entry that names the password in the credential store |
+| A password unique to each unit that the operator does not have | an AuthPolicy that admits them on trust from the operator's access networks |
+| A USP bootstrap credential | an AuthPolicy bootstrap entry with the password's argon2id hash |
+
+The guides are https://docs.herder.ispx.co/guides/auth-policies/ and,
+for per-unit passwords,
+https://docs.herder.ispx.co/guides/per-unit-factory-passwords/.
+
+An AuthPolicy goes in `vendors/<name>/auth.yaml`, selected on the
+vendor's `oui` and protocol, and is validated like any other buffer
+(step 5). What it admits is the operator's decision: a trust policy's
+`sourceRanges` and `window`, whether `readmitOnReset` is set, and the
+credential names it uses. Write only what they give you, never widen a
+range to make a unit connect, and never put a password in the
+repository. The refusal reason is in the CWMP service log, which the
+API does not expose; ask the operator for it when an admitted unit
+still does not appear.
+
 ## 1. Survey
 
 Run the `survey-datamodel` skill. Output: the tuple, the tree, the
@@ -90,6 +116,7 @@ In the config fork, `vendors/<name>/`, modelled on `vendors/arris/`:
   recipe below replaces a baseline table with a vendor one, list the
   vendor table instead, never both.
 - **MappingTables** from step 3 and from the recipes.
+- **AuthPolicy** in `auth.yaml`, only when step 0 needed one.
 - Then, per chosen feature, the recipe.
 
 Multi-document files are the convention: one `<vendor>.yaml` holding
