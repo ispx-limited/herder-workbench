@@ -41,25 +41,28 @@ check), read the spec rather than guessing paths.
 
 ## The flow
 
-An unknown CPE that informs already works partially: baseline profiles
-resolve standard paths. Integration is closing the gap, and it is
-config work in the operator's Git fork, never a code change:
+An unknown CPE that Herder admits already works partially: baseline
+profiles resolve standard paths. Integration is closing the gap, and it
+is config work in the operator's Git fork, never a code change:
 
-1. **Survey** what the device exposes (skill: `survey-datamodel`).
-2. **Scope with the operator**: put the survey's feature inventory to
+1. **Admit** the units when they are not in the device list: Herder
+   registers a CPE only after authenticating it (the options are in
+   `onboard-vendor`, step 0).
+2. **Survey** what the device exposes (skill: `survey-datamodel`).
+3. **Scope with the operator**: put the survey's feature inventory to
    them and ask which features to wire now (the menu is in
    `onboard-vendor`). Write only what they chose.
-3. **Read the gaps**: which reserved canonicals are unmapped, per
+4. **Read the gaps**: which reserved canonicals are unmapped, per
    feature (skill: `mapping-gaps`).
-4. **Write** the `vendors/<name>/` directory: a MappingProfile scoped
+5. **Write** the `vendors/<name>/` directory: a MappingProfile scoped
    to the vendor tuple, MappingTables binding canonicals to the vendor
    paths, then the recipe for each chosen feature (telemetry, labels,
    topology, scan, modules, compliance). Model on `vendors/arris/` in
    herder-public-configs.
-5. **Validate every buffer** through the API before committing (the
+6. **Validate every buffer** through the API before committing (the
    `onboard-vendor` skill has the exact calls). Scripts are TypeScript
    against `types/sdk.d.ts` in the config repo.
-6. **Ship by Git**, verify the binding flipped, then prove each chosen
+7. **Ship by Git**, verify the binding flipped, then prove each chosen
    feature against the device.
 
 The full narrative is the Vendor Onboarding guide:
@@ -75,6 +78,10 @@ https://docs.herder.ispx.co/guides/vendor-onboarding/
   `vendors/<name>/` with a selector narrow enough not to capture other
   hardware, at priority 50 or higher.
 - Validate before you commit. A buffer the API rejects is not done.
+- Admission is the operator's security decision. Write an AuthPolicy
+  only with the source networks, window, reset behaviour and credential
+  names the operator gives you, never widen one to make a unit connect,
+  and never put a password in the repository.
 - Reserved canonical semantics come from
   https://docs.herder.ispx.co/schemas/reserved-canonicals.json; the
   `valueType` there is enforced at sync time.

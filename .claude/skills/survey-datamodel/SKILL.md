@@ -18,8 +18,10 @@ curl -s "$HERDER_API/api/v1/devices?limit=5&search=<serial-or-model>" \
 ```
 
 Record `device_id`, `oui`, `product_class`, and the firmware from
-metadata. If the device is not there, it has not informed yet; that
-problem comes first.
+metadata. If the device is not there, either it has not informed yet
+or Herder refused it, since Herder registers a CPE only after
+authenticating it. That problem comes first; step 0 of
+`onboard-vendor` covers it.
 
 ## 2. Trigger discovery
 
@@ -213,3 +215,9 @@ native: the agent itself reports its supported data model
 does not arise. USP trees are always `Device.*` (TR-181). These notes
 are grounded in the platform's USP dispatch, not yet in a live
 workbench run; treat them as the map, not the territory.
+
+Record the agent's endpoint ID. Herder reads the `oui` selector label
+from it only for the schemes that carry one: `oui:<OUI>:<instance-id>`,
+`os::<OUI>-<SerialNumber>` and `ops::<OUI>-<ProductClass>-<SerialNumber>`.
+An agent that writes `os::` without the hyphen presents no `oui`, so a
+bootstrap entry selected on `oui` does not admit it.
