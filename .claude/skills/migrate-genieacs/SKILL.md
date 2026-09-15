@@ -27,20 +27,82 @@ A script that writes a canonical the device's profile does not bind
 fails as `canonical_unmapped`, so the mapping work comes before the
 script work.
 
-Collect the GenieACS material from its NBI, which listens on port 7557
-by default:
+The GenieACS side is read through its NBI (port 7557 by default,
+reference at https://docs.genieacs.com/en/latest/api-reference.html).
+Ask the operator for its address; it is normally reachable only from
+inside their network. Read it the way step 1 describes, smallest
+collection first, and never paste an export into the repository as
+is: a provision can carry passphrases and API keys in literals.
+
+## 1. Read GenieACS through its NBI
+
+Every collection answers `GET /<collection>/?query=<mongo filter>`
+and takes `projection=<comma-separated fields>`. Use both on every
+call: a device document carries the whole data model with a
+timestamp, type and writable flag per parameter, and a fleet of them
+is more than any session should read. Send the query through
+`--data-urlencode` so the JSON survives the URL:
 
 ```bash
-curl -s http://<genieacs>:7557/presets/ > presets.json
-curl -s http://<genieacs>:7557/provisions/ > provisions.json
-curl -s http://<genieacs>:7557/virtual_parameters/ > vparams.json
+G=http://<genieacs>:7557
+curl -s -G "$G/presets/" > presets.json
 ```
 
-Extensions are files under GenieACS's `config/ext/`; ask the operator
-for them. Do not paste any of this into the repository as is: a
-provision export can carry passphrases and API keys in literals.
+Presets are the index: each one names its `precondition`, `events`,
+`schedule`, `weight`, `channel` and `configurations`, and the
+`configurations` entries of type `provision` name the scripts in
+use. Read only those:
 
-## 1. The model shift
+```bash
+curl -s -G "$G/provisions/" --data-urlencode 'query={"_id": {"$in": ["inform", "wifi"]}}'
+curl -s -G "$G/virtual_parameters/"
+```
+
+Virtual parameters are usually few; read them all. Extensions are
+files under GenieACS's `config/ext/`, not in the NBI; ask the operator
+for the ones the provisions call.
+
+Then three reads that make the conversion cheaper and more honest:
+
+- **Who each preset reaches.** A precondition is a MongoDB filter, so
+  it is its own query. Post it back with a projection of `_id` and
+  count the result; that is the population the Herder selector has to
+  match, and a preset that matches nothing is not worth porting.
+
+  ```bash
+  curl -s -G "$G/devices/" --data-urlencode 'query={"_tags": "managed-wifi"}' \
+    --data-urlencode 'projection=_id,_deviceId._OUI,_deviceId._ProductClass' | python3 -c \
+    'import json,sys; d=json.load(sys.stdin); print(len(d)); print(sorted({(x["_deviceId"]["_OUI"], x["_deviceId"]["_ProductClass"]) for x in d}))'
+  ```
+
+  The OUI and product class pairs are the Herder selector, on the
+  same labels.
+- **What a provision's paths look like on real hardware.** Project
+  the paths a script writes on one device from each pair; the answer
+  says whether the path exists, what it holds now and whether it is
+  `_writable`. That is the survey for this skill: a `devicePath` in a
+  mapping entry comes from here or from `survey-datamodel`, never from
+  the provision alone.
+
+  ```bash
+  curl -s -G "$G/devices/" --data-urlencode 'query={"_id": "<device_id>"}' \
+    --data-urlencode 'projection=Device.WiFi.SSID.1.SSID,Device.WiFi.AccessPoint.1.Security.KeyPassphrase'
+  ```
+
+  Keep the current values: step 5 compares them with what Herder's
+  evaluate reports as `from`. A projected passphrase is still a
+  secret; it stays in the session and out of the fork and the report.
+- **What is broken today.** `GET /faults/` lists the presets that
+  fail on some device, with the fault id as `<device_id>:<channel>`.
+  A provision that faults on half its population is not ported as is;
+  it is a question for the operator.
+
+Firmware provisions name a file; `GET /files/` carries each file's
+`fileType`, `oui`, `productClass` and `version` metadata, and the
+version is what a Herder release is named by. Hand that list to
+`firmware-readiness`.
+
+## 2. The model shift
 
 GenieACS runs a provision repeatedly inside one session until its
 declarations produce no further side effects; its docs say so, and
@@ -86,7 +148,7 @@ So every converted script:
    flags in local variables, no ordering between two rules. Tags are
    the only memory a script has, and they are idempotent.
 
-## 2. Concept map
+## 3. Concept map
 
 | GenieACS | Herder | Notes |
 |----------|--------|-------|
@@ -98,6 +160,9 @@ So every converted script:
 | `declare("Obj.[]", null, {path: 0})` or `{path: 0}` on a filter | `device.removeObject(pathOrSearch)` | Removes every match. |
 | `clear(path, ts)` | Nothing | Herder forgets applied state on factory reset by itself. |
 | `commit()` | Nothing | Writes apply after the script, as one batch. |
+| Preset `configurations` of type `value` | `desired.parameters`, a flat map of canonical name to value | No script. A value-only preset is the declarative rule form. |
+| Preset `configurations` of type `add_object` or `delete_object` | `device.ensureObject` or `device.removeObject` in a script | The declarative form has no object operations. |
+| Preset `configurations` of type `provision` | `desired.script` | One rule per preset; the script is the ported provision. |
 | Preset `events` (`0 BOOTSTRAP`, `1 BOOT`, `2 PERIODIC`) | `spec.triggers`: `first_contact`, `boot`, `periodic`; add `connection_request` where a periodic rule should also run on operator contact | A rule fires on any listed trigger. |
 | Preset `precondition` on `_tags`, `DeviceID.*`, or identity | `spec.deviceSelector` on labels: `tag:<name>` with `Exists`, `oui`, `model`, `productClass`, `firmwareVersion` with `SemverRange` | Labels are listed at https://docs.herder.ispx.co/guides/device-selectors/. |
 | Preset `precondition` on any other parameter value | A guard in the script: `device.get`, then `provision.skip("why")` | Selectors see labels only. |
@@ -123,19 +188,20 @@ honest conversion of a vendor-specific provision keeps them. A rule
 that names raw paths is data-model-bound, so give it a `dataModel:`
 or `oui` selector that says so.
 
-## 3. Workflow
+## 4. Workflow
 
 ### Inventory
 
 Before converting anything, one table for the operator, from the
 exports:
 
-| Preset | Events | Precondition | Provision, args | Writes | Reads | ext calls | Reboot or reset |
-|--------|--------|--------------|-----------------|--------|-------|-----------|-----------------|
+| Preset | Events | Precondition | Devices matched | Configurations or provision, args | Writes | Reads | ext calls | Reboot or reset | Faults |
+|--------|--------|--------------|-----------------|-----------------------------------|--------|-------|-----------|-----------------|--------|
 
-Plus one row per virtual parameter (what it reads, whether it is
-writable, what writes it) and one per extension function (what it
-fetches, from where, with what credential).
+"Devices matched" and "Faults" come from step 1's reads. Plus one
+row per virtual parameter (what it reads, whether it is writable, what
+writes it) and one per extension function (what it fetches, from
+where, with what credential).
 
 ### Scope with the operator
 
@@ -179,7 +245,7 @@ Record the answer and convert only what was chosen.
    are TypeScript against `types/sdk.d.ts` in the config fork, strict,
    wrapped in an IIFE, no imports.
 
-Then step 4, before any commit.
+Then step 5, before any commit.
 
 ## Worked examples
 
@@ -204,7 +270,9 @@ seed exists to prevent. Offer the seed. When the operator wants a
 fixed value regardless, the port is one rule and one script. The two
 data-model branches collapse into one canonical, the refresh
 timestamps go away because Herder diffs, and the argument moves into
-the rule's `config`:
+the rule's `config`. Had the preset carried the same two writes as
+`value` configurations instead of a provision, the whole port would
+be the rule with `desired.parameters` and no script at all:
 
 ```yaml
 apiVersion: provisioning.herder.io/v1alpha1
@@ -361,9 +429,11 @@ if (fw < "2.4.0") {
 The version test was a string comparison, which is wrong for
 `2.10.0`; it moves into the selector as a semver range. The product
 class moves into the selector too. The download becomes a catalog
-release: the image `xg1-2.4.0.bin` has to be in Herder's firmware
-catalog with a selector that matches this model first, which is the
-`firmware-readiness` skill, one device proven before any cohort.
+release: `GET /files/` on the NBI gives `xg1-2.4.0.bin` its `version`,
+`oui` and `productClass`, and that image has to be in Herder's
+firmware catalog under that version with a selector that matches this
+model first, which is the `firmware-readiness` skill, one device
+proven before any cohort.
 
 ```yaml
 apiVersion: provisioning.herder.io/v1alpha1
@@ -408,7 +478,7 @@ unresolved, so a unit that just bootstrapped may not match until its
 next boot; that is the correct behaviour for a service-interrupting
 step.
 
-## 4. Validate and evaluate every buffer
+## 5. Validate and evaluate every buffer
 
 Before any commit, the same calls as `onboard-vendor` step 5, against
 the domain named by the kind's registry entry in
@@ -442,9 +512,11 @@ What to check in the response:
 - `matches` is true. False means the selector does not match the
   device's labels; read `GET /api/v1/devices/<id>` and compare.
 - `changeSet.parameters` lists each write with `path`, `value` and
-  `from`. An empty list on a device already in the desired state is
-  correct, not a failure. A `canonical_unmapped` error means the
-  mapping step was skipped.
+  `from`. `from` should equal what step 1's projected read returned
+  for the same device; a difference means Herder has not yet seen the
+  parameter, or the mapping points somewhere else. An empty list on a
+  device already in the desired state is correct, not a failure. A
+  `canonical_unmapped` error means the mapping step was skipped.
 - `changeSet.tagAdds` and `tagRemoves` are the tags you expected.
 - `lifecycle` carries any reboot, reset or upgrade intent, with its
   cause.
