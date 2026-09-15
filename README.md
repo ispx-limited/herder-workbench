@@ -42,6 +42,7 @@ yourself.
 | `.claude/skills/mapping-gaps/` | Coverage gaps to mapping-table skeletons |
 | `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
 | `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
+| `.claude/skills/migrate-genieacs/` | Porting GenieACS provisions, presets and virtual parameters to Herder rules, scripts and mappings |
 | `.claude/agents/datamodel-surveyor.md` | A background agent that runs the survey while the session writes |
 
 ## What this is not
