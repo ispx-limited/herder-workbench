@@ -510,7 +510,9 @@ curl -s -X POST "$HERDER_API/api/v1/config/provisioning/evaluate?device_id=<devi
 What to check in the response:
 
 - `matches` is true. False means the selector does not match the
-  device's labels; read `GET /api/v1/devices/<id>` and compare.
+  device's labels; read `GET /api/v1/devices/<id>` and compare. The
+  plan is still returned, with a `note` saying so, which is how a
+  tag-gated rule is proven against a live device without tagging it.
 - `changeSet.parameters` lists each write with `path`, `value` and
   `from`. `from` should equal what step 1's projected read returned
   for the same device; a difference means Herder has not yet seen the
