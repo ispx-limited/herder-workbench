@@ -61,8 +61,15 @@ Rules:
 
 - Candidates come from the surveyed model only. No invented paths.
 - Instance wildcards are `{i}`, not `*` or a literal index.
-- If nothing plausible exists on the model, say so. An honest "this
-  device cannot do this feature" beats a guessed binding.
+- Search the whole model, case-insensitively, with several words for
+  the thing, and against every vendor prefix. The canonical's own
+  spelling is the worst search term for a vendor tree.
+- If nothing plausible turns up, say which of the two it is: the model
+  has no such object, or you have not found one. An honest "not found
+  yet" beats a guessed binding, and it is a far smaller claim than
+  "this device cannot do this feature", which costs what
+  `survey-datamodel`'s section on absence says it costs. Leave the
+  canonical unmapped and put it to the operator as a question.
 
 ## 4. Emit the skeleton
 

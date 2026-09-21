@@ -1,6 +1,6 @@
 ---
 name: survey-datamodel
-description: Discover and summarize what a CPE actually exposes. Use when starting a vendor integration, when a mapping needs a real path, or when asked what a device model supports.
+description: Discover and summarize what a CPE actually exposes. Use when starting a vendor integration, when a mapping needs a real path, when asked what a device model supports, and before telling anyone a device does not support something.
 ---
 
 # Survey a device's data model
@@ -171,6 +171,64 @@ Reference the object path at the lowest object whose parent index is
 stable. Tier 2 decides how many references you write, tier 3 rides
 inside them.
 
+## Not finding it is not the same as it not being there
+
+Nothing above reads the device. The discovered model is one walk that
+happened once, the stored parameters are the union of what past
+sessions happened to carry, and both are caches. A feature is missing
+from them for four reasons and only one of them is the hardware: the
+walk was truncated, the branch was never walked, the device has
+reported the names but no values yet, or the object really is not
+there.
+
+So every feature has three states, not two:
+
+- **present**: the object is there and you read it.
+- **present but empty**: the object is there, with no instances or no
+  values right now. A call log on a unit that has made no calls, an
+  associated-device table at four in the morning. The feature works;
+  proving it needs a unit that exercises it.
+- **unknown**: you did not find it. Unknown is work outstanding, not
+  a finding. It does not become "the device does not support it" in a
+  summary, in a scoping answer, or in a sentence to the operator.
+
+Moving a feature from unknown to absent takes all of this:
+
+1. **Search the whole tree, not the branch it belongs in.** A vendor
+   is as likely to keep a feature under its own prefix as under the
+   standard object: a call log can be `VoiceService.{i}.CallLog.`, a
+   vendor `VoipLog` table, or a `SIP.` branch the vendor added. Sweep
+   every path case-insensitively, with several words for the thing
+   (`call`, `cdr`, `history`, `log`), and sweep every `X_*` prefix
+   step 4 turned up.
+2. **Search names, not values.** A filter that keeps only parameters
+   that have a value drops exactly what you are hunting: an object
+   the device has named and never populated. Count names.
+3. **Read what the standard calls it.** TR-104 names the voice
+   objects, TR-143 the throughput diagnostics, TR-181 and TR-098 the
+   rest. A branch nobody thought to search is the ordinary reason a
+   feature looks missing.
+4. **Confirm the walk was whole.** `truncated` set, a discovery task
+   that ended `failed`, a manual walk that stopped short: none of
+   them can carry a negative. Fix the walk first.
+5. **Refresh the subtree live.** A `GetParameterNames` task on the
+   parent object and a connection request, the mechanism from step 3a
+   with one path instead of a batch. Firmware adds objects, so a tree
+   walked before the last upgrade answers for the old build.
+6. **Ask a unit that would have the data.** Say which one: serial or
+   device id, the exact firmware string, and how many units you
+   checked.
+
+Then write the finding as what it is: not present under any branch of
+the tuple, at the firmware string the unit reports, after a full walk
+of N parameters refreshed on a stated date, across M units. That
+sentence is worth something. "The device does not support it" is not,
+because nobody can tell which of the four reasons it rests on.
+
+A negative is scoped to a firmware string, never to a vendor. Support
+arrives and leaves in firmware builds, and the same model in two
+operator builds is two answers.
+
 ## 5. Summarize
 
 Report: the tuple, parameter count and truncation, the data-model root
@@ -181,7 +239,9 @@ credentials, WiFi, diagnostics, firmware.
 
 Then the feature inventory, one line per platform feature, stating
 whether the device has the standard object, a vendor tree instead, or
-neither. It is what the operator chooses from in `onboard-vendor`:
+neither, each in one of the three states above and with the evidence
+behind anything called absent. It is what the operator chooses from in
+`onboard-vendor`:
 
 - Interfaces: the Ethernet interface table, and which instance has
   `Upstream=true` (TR-181) or is the WAN object (TR-098).

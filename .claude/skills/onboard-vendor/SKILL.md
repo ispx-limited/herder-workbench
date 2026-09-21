@@ -90,6 +90,13 @@ credentials and identity are not on the menu; they are always
 checked. Record the answer, write only what was chosen, and list the
 rest at the end as available later. Never assume "all of them".
 
+Take nothing off the menu yourself. A feature the survey could not
+find goes to the operator as unknown, with what it would take to
+settle it, never withheld and never argued against: the survey reads a
+cache, and what is worth building is their call, not yours. Before a
+"this vendor cannot" line reaches the menu at all, it clears the bar
+in `survey-datamodel`'s section on absence.
+
 ## 3. Gaps
 
 Run the `mapping-gaps` skill. Output: unmapped reserved canonicals
@@ -288,8 +295,9 @@ Then each chosen feature, against the device, not against the files:
 | Device page | `GET /api/v1/devices/<id>/ui-profile` names the expected sections |
 
 Report to the operator: what was wired, with the proof; what the
-device cannot do; any candidate you were unsure of; and the menu
-items left for later.
+device cannot do, each with the evidence behind it; what is still
+unknown and what would settle it; any candidate you were unsure of;
+and the menu items left for later.
 
 ## Protocol note
 

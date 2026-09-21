@@ -60,7 +60,9 @@ curl -s "$HERDER_API/api/v1/devices/<device_id>/parameters?limit=500" \
 
 If the raw values are zeros, the verification needs a live client
 actually using the network near the AP; report that as the blocker
-instead of rewriting a working rule.
+instead of rewriting a working rule. This is `survey-datamodel`'s
+present but empty: the table is there and the device is idle. An empty
+table on an idle unit is never evidence that a feature is missing.
 
 ## 4. The network map
 
