@@ -92,6 +92,23 @@ Then three reads that make the conversion cheaper and more honest:
   Keep the current values: step 5 compares them with what Herder's
   evaluate reports as `from`. A projected passphrase is still a
   secret; it stays in the session and out of the fork and the report.
+
+  An empty projection is not proof the path is missing. A device
+  document holds every parameter GenieACS has discovered, and one the
+  CPE has named but never valued carries `_object` and `_writable`
+  with no `_value`, so any read that keeps only values drops exactly
+  the object you are hunting. Project the parent and look at the keys.
+  When the answer decides anything, refresh it first and read again:
+
+  ```bash
+  curl -s -X POST "$G/devices/<device_id>/tasks?connection_request" \
+    -H 'Content-Type: application/json' \
+    -d '{"name": "refreshObject", "objectName": "Device.Services."}'
+  ```
+
+  The document is what past sessions happened to carry, not what the
+  device has now. `survey-datamodel`'s section on absence is the same
+  rule on the Herder side.
 - **What is broken today.** `GET /faults/` lists the presets that
   fail on some device, with the fault id as `<device_id>:<channel>`.
   A provision that faults on half its population is not ported as is;
