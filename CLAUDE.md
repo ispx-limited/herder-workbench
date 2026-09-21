@@ -72,6 +72,12 @@ https://docs.herder.ispx.co/guides/vendor-onboarding/
 
 - Never invent parameter paths. Every `devicePath` you write must come
   from the surveyed model or the device's reported parameters.
+- Never report a path or a feature missing on the strength of a read
+  that could have missed it. The discovered model and a device's
+  stored parameters are caches of earlier walks, so absent from them
+  is not absent from the device. Until the ladder in
+  `survey-datamodel` has been climbed, the honest answer is "not
+  found yet", never "not supported".
 - Respect `writable` from the survey: a read-only parameter is not a
   provisioning target, whatever its name suggests.
 - Baseline files stay vendor-neutral; vendor behaviour goes in

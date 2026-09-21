@@ -31,5 +31,12 @@ feature inventory the `survey-datamodel` skill's step 5 lists
 (interfaces and which is upstream, WiFi clients and where the signal
 leaf is, mesh objects, scan objects, port mappings, remote access
 and its account table, diagnostics, the exact firmware string).
+Every feature line carries its state in the survey skill's three:
+present, present but empty, or unknown. Anything you call absent
+carries its evidence: which unit, which firmware, which method, and
+the counts behind it.
+
 Include the path of the walk file so the main session can query it.
-Report numbers you measured, never estimates.
+Report numbers you measured, never estimates, and report unknown as
+unknown. A branch you did not walk is not a branch the device does
+not have.
