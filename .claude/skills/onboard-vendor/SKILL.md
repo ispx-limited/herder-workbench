@@ -294,6 +294,13 @@ Then each chosen feature, against the device, not against the files:
 | Diagnostics | the action's run reaches completed with a result |
 | Device page | `GET /api/v1/devices/<id>/ui-profile` names the expected sections |
 
+That table proves the features you chose. It does not prove the page,
+because it starts from the list of what you built: a section rendering
+that this hardware can never fill, and a capability the device reports
+that no section shows, both pass it. Finish with `surface-audit`, which
+starts from the page instead and runs across several units so a model's
+answer is not one unit's.
+
 Report to the operator: what was wired, with the proof; what the
 device cannot do, each with the evidence behind it; what is still
 unknown and what would settle it; any candidate you were unsure of;

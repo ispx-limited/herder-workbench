@@ -64,6 +64,10 @@ is config work in the operator's Git fork, never a code change:
    against `types/sdk.d.ts` in the config repo.
 7. **Ship by Git**, verify the binding flipped, then prove each chosen
    feature against the device.
+8. **Audit the page** across several units of the model (skill:
+   `surface-audit`). Proving the features you built does not prove the
+   page: a section this hardware can never fill, and a capability the
+   device reports that nothing shows, both survive step 7.
 
 The full narrative is the Vendor Onboarding guide:
 https://docs.herder.ispx.co/guides/vendor-onboarding/
