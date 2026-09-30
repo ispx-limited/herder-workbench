@@ -110,8 +110,16 @@ show their gaps per feature, in the recipes below.
 
 In the config fork, `vendors/<name>/`, modelled on `vendors/arris/`:
 
-- **MappingProfile** named `<vendor>-<family>`: selector on the `oui`
-  label plus `productClass` values, priority 50 or higher (highest
+- **The fleet row first.** `.herder/fleet.yaml` in the config repo
+  lists every device family the bundle knows as the label set Herder
+  derives for it (oui, manufacturer, productClass, dataModels,
+  protocols). Add the new tuple from the survey before writing any
+  document, so the golden in step 6 has a row to move.
+- **MappingProfile** named `<vendor>-<family>`: selector on
+  `productClass` values (the model; an OUI changes between purchase
+  batches and a manufacturer string is free text, so neither alone
+  names the hardware, and the config repo's lint refuses a `vendors/`
+  selector without the model), priority 50 or higher (highest
   priority number wins), listing the baseline tables that fit plus the
   new vendor tables. **Binding is single-profile: the winning
   profile's table list is the device's complete mapping vocabulary.**
@@ -263,6 +271,26 @@ validation after the sync. `GET /api/v1/config/sources` shows
 per-domain sync status when in doubt.
 
 ## 6. Ship, verify the binding, then verify each feature
+
+Before the commit, the whole-repository check, which is what the
+config repo's CI runs on the PR. The buffer validation in step 5
+proved each document on its own; this proves the directory did not
+move anything for another vendor's hardware:
+
+```bash
+docker run --rm -v "$PWD:/bundle" ghcr.io/ispx-limited/herder-community:v0.52.0 \
+  herder config resolve /bundle --fleet /bundle/.herder/fleet.yaml \
+  --golden /bundle/.herder/resolution.golden.yaml --update
+git diff --stat .herder/resolution.golden.yaml
+```
+
+Read the golden diff. The only rows that may change are the device
+you added to the fleet in step 4. A row moving for any other device
+is the new directory capturing that hardware, an equal-priority tie,
+or a telemetry path taken from another profile: narrow the selector
+or move the priority until the diff is only your rows. Then
+`herder config lint` with the same `--fleet` for the vendor rules,
+and commit the golden with the directory.
 
 Commit, push, let the config source sync. The binding says which
 profile won and why, and it is the first thing to check after the
