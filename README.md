@@ -43,6 +43,7 @@ yourself.
 | `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
 | `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
 | `.claude/skills/surface-audit/` | Every section of the device page checked across several units |
+| `.claude/skills/deployment-audit/` | A running deployment checked across its whole fleet: config sources, the desk's actions, reachability, firmware and advisories |
 | `.claude/skills/migrate-genieacs/` | Porting GenieACS provisions, presets and virtual parameters to Herder rules, scripts and mappings |
 | `.claude/agents/datamodel-surveyor.md` | A background agent that runs the survey while the session writes |
 

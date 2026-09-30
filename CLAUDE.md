@@ -72,6 +72,11 @@ is config work in the operator's Git fork, never a code change:
 The full narrative is the Vendor Onboarding guide:
 https://docs.herder.ispx.co/guides/vendor-onboarding/
 
+Taking over a deployment that already runs, or checking one before
+calling it done, is a different job: every model at once, plus the
+config sources, the desk's actions, reachability, firmware and
+advisories (skill: `deployment-audit`).
+
 ## Rules
 
 - Never invent parameter paths. Every `devicePath` you write must come
