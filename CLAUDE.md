@@ -63,13 +63,16 @@ is config work in the operator's Git fork, never a code change:
    against `types/sdk.d.ts` in the config repo.
 7. **Ship by Git**, verify the binding flipped, then prove each
    feature against the device.
-8. **Pass the gate** (skill: `parity-gate`). `tools/parity.py` compares
+8. **Link the home** when the vendor's extenders are managed devices
+   of their own: every extender names its gateway and both show the
+   same map (skill: `home-links`).
+9. **Pass the gate** (skill: `parity-gate`). `tools/parity.py` compares
    the device's whole walked model with what Herder reads, maps and
    shows, and exits 1 while anything is missing. Every finding is wired
    or waived with evidence. The onboarding is done when it exits 0 on
    three units of the model, and not before.
-9. **Audit the page** across several units of the model (skill:
-   `surface-audit`), for what one unit cannot show.
+10. **Audit the page** across several units of the model (skill:
+    `surface-audit`), for what one unit cannot show.
 
 The full narrative is the Vendor Onboarding guide:
 https://docs.herder.ispx.co/guides/vendor-onboarding/
@@ -97,6 +100,14 @@ advisories (skill: `deployment-audit`).
 - Validate before you commit. A buffer the API rejects is not done.
 - Never report a model as onboarded, done or working while
   `tools/parity.py` fails for it. Say what the gate says.
+- A change that touches topology, on any vendor, is checked across the
+  whole fleet and on every instance it reaches: run
+  `.claude/skills/home-links/check_home_links.py --save` before and
+  `--compare` after. A link that one vendor gains can be a link another
+  loses, and a lost link looks like an ordinary device.
+- One leaf per request when the answer matters. A CPE that rejects one
+  name rejects the request, so a refused batch says nothing about the
+  leaves in it.
 - Admission is the operator's security decision. Write an AuthPolicy
   only with the source networks, window, reset behaviour and credential
   names the operator gives you, never widen one to make a unit connect,
