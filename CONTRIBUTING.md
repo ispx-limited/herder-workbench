@@ -5,7 +5,8 @@ Herder API, and sharpening that makes a step less ambiguous for an
 agent. New skills are welcome when they cover a real integration task
 the existing ones do not.
 
-There is nothing to build. Test a change by running the skill it
+There is nothing to build: `tools/parity.py` is one file on the
+standard library and PyYAML. Test a change by running the skill it
 touches against a live Herder: every API call in these files is meant
 to work as written, with `HERDER_API` and `HERDER_TOKEN` set. A skill
 step that does not work as written is a defect.

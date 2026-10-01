@@ -49,25 +49,27 @@ is config work in the operator's Git fork, never a code change:
    registers a CPE only after authenticating it (the options are in
    `onboard-vendor`, step 0).
 2. **Survey** what the device exposes (skill: `survey-datamodel`).
-3. **Scope with the operator**: put the survey's feature inventory to
-   them and ask which features to wire now (the menu is in
-   `onboard-vendor`). Write only what they chose.
+3. **Scope is everything the device exposes**, unless the operator
+   narrowed it in the request. Do not ask which features to wire.
 4. **Read the gaps**: which reserved canonicals are unmapped, per
    feature (skill: `mapping-gaps`).
 5. **Write** the `vendors/<name>/` directory: a MappingProfile scoped
    to the vendor tuple, MappingTables binding canonicals to the vendor
-   paths, then the recipe for each chosen feature (telemetry, labels,
+   paths, then the recipe for each feature the survey found (telemetry, labels,
    topology, scan, modules, compliance). Model on `vendors/arris/` in
    herder-public-configs.
 6. **Validate every buffer** through the API before committing (the
    `onboard-vendor` skill has the exact calls). Scripts are TypeScript
    against `types/sdk.d.ts` in the config repo.
-7. **Ship by Git**, verify the binding flipped, then prove each chosen
+7. **Ship by Git**, verify the binding flipped, then prove each
    feature against the device.
-8. **Audit the page** across several units of the model (skill:
-   `surface-audit`). Proving the features you built does not prove the
-   page: a section this hardware can never fill, and a capability the
-   device reports that nothing shows, both survive step 7.
+8. **Pass the gate** (skill: `parity-gate`). `tools/parity.py` compares
+   the device's whole walked model with what Herder reads, maps and
+   shows, and exits 1 while anything is missing. Every finding is wired
+   or waived with evidence. The onboarding is done when it exits 0 on
+   three units of the model, and not before.
+9. **Audit the page** across several units of the model (skill:
+   `surface-audit`), for what one unit cannot show.
 
 The full narrative is the Vendor Onboarding guide:
 https://docs.herder.ispx.co/guides/vendor-onboarding/
@@ -93,6 +95,8 @@ advisories (skill: `deployment-audit`).
   `vendors/<name>/` with a selector narrow enough not to capture other
   hardware, at priority 50 or higher.
 - Validate before you commit. A buffer the API rejects is not done.
+- Never report a model as onboarded, done or working while
+  `tools/parity.py` fails for it. Say what the gate says.
 - Admission is the operator's security decision. Write an AuthPolicy
   only with the source networks, window, reset behaviour and credential
   names the operator gives you, never widen one to make a unit connect,
