@@ -81,6 +81,16 @@ Two patterns only show across a fleet:
   has to be selected on something that differs between them, usually a
   tag a rule writes.
 
+Where extenders are managed devices, run the fleet check from
+`home-links` as well:
+
+```bash
+python3 .claude/skills/home-links/check_home_links.py
+```
+
+Every failure it prints is a home whose gateway and extender disagree
+about how they are connected, which no single page shows.
+
 ## 4. Whether the desk's tools work
 
 The actions a device offers, and what happened when someone ran them:

@@ -41,6 +41,7 @@ yourself.
 | `.claude/skills/survey-datamodel/` | Discover and summarize what a device exposes |
 | `.claude/skills/mapping-gaps/` | Coverage gaps to mapping-table skeletons |
 | `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
+| `.claude/skills/home-links/` | Extenders linked to their gateways, one map per home, and a script that checks every home on an instance |
 | `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
 | `.claude/skills/surface-audit/` | Every section of the device page checked across several units |
 | `.claude/skills/deployment-audit/` | A running deployment checked across its whole fleet: config sources, the desk's actions, reachability, firmware and advisories |
