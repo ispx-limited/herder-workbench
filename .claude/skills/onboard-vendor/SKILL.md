@@ -57,14 +57,18 @@ vendor prefixes, the writable surface, and the feature inventory:
 which standard objects the device has, and which of those things it
 keeps under a vendor tree instead.
 
-## 2. Scope with the operator
+## 2. Scope: everything the device exposes
 
-Before writing anything, put the feature inventory to the operator
-as one question and let them choose. A standard tree already gets
-most of this from the baseline. What the operator is choosing is
-which surfaces they want proven on this vendor now, and where the
-survey found a vendor tree in place of the standard object, which of
-those to wire.
+The default scope is all of it. Every row of the menu below that the
+survey found on the device gets wired in this run, without asking. An
+onboarding that wires the half somebody named and stops is how a model
+ends up on the fleet with no default gateway on its WAN and its mesh
+extenders missing from the map.
+
+The operator narrows the scope by saying so in the request ("identity
+and firmware only"). When they have, what was left out is waived in
+their name in step 7, so the gate records the decision instead of
+forgetting it. Never narrow it yourself.
 
 The menu, in the platform's words:
 
@@ -81,21 +85,11 @@ The menu, in the platform's words:
 | Firmware | campaign readiness | `DeviceInfo.SoftwareVersion`, Download | identity exactness and one device before any cohort |
 | Diagnostics | ping, traceroute, DNS, speed test as actions | `IP.Diagnostics.*`, TR-143 | an ActionProfile over the vendor tree when the diagnostic lives there |
 
-Ask: "Which of these do you want wired for this vendor now?" With a
-question tool available, ask it as one multi-select question and put
-the inventory finding in each option's description ("WAN is
-Interface.9; the baseline maps Interface.1"). Without one, list the
-menu with the findings and wait for the answer. Management
-credentials and identity are not on the menu; they are always
-checked. Record the answer, write only what was chosen, and list the
-rest at the end as available later. Never assume "all of them".
-
 Take nothing off the menu yourself. A feature the survey could not
-find goes to the operator as unknown, with what it would take to
-settle it, never withheld and never argued against: the survey reads a
-cache, and what is worth building is their call, not yours. Before a
-"this vendor cannot" line reaches the menu at all, it clears the bar
-in `survey-datamodel`'s section on absence.
+find is unknown, with what it would take to settle it, never absent:
+the survey reads a cache. Before a "this vendor cannot" line is
+written anywhere, it clears the bar in `survey-datamodel`'s section on
+absence.
 
 ## 3. Gaps
 
@@ -132,7 +126,7 @@ In the config fork, `vendors/<name>/`, modelled on `vendors/arris/`:
   vendor table instead, never both.
 - **MappingTables** from step 3 and from the recipes.
 - **AuthPolicy** in `auth.yaml`, only when step 0 needed one.
-- Then, per chosen feature, the recipe.
+- Then the recipe for every feature the survey found.
 
 Multi-document files are the convention: one `<vendor>.yaml` holding
 the profile and its tables reads better than five fragments. Scripts
@@ -306,7 +300,7 @@ number wins) and a selector that does not match the device's labels.
 Then re-read coverage: the mapped names report `bound`, and what is
 still `unmapped` is the honest remaining list.
 
-Then each chosen feature, against the device, not against the files:
+Then each feature, against the device, not against the files:
 
 | Feature | Proof |
 |---------|-------|
@@ -322,17 +316,25 @@ Then each chosen feature, against the device, not against the files:
 | Diagnostics | the action's run reaches completed with a result |
 | Device page | `GET /api/v1/devices/<id>/ui-profile` names the expected sections |
 
-That table proves the features you chose. It does not prove the page,
+That table proves the features you built. It does not prove the page,
 because it starts from the list of what you built: a section rendering
 that this hardware can never fill, and a capability the device reports
 that no section shows, both pass it. Finish with `surface-audit`, which
 starts from the page instead and runs across several units so a model's
 answer is not one unit's.
 
-Report to the operator: what was wired, with the proof; what the
-device cannot do, each with the evidence behind it; what is still
-unknown and what would settle it; any candidate you were unsure of;
-and the menu items left for later.
+## 7. The gate
+
+Run the `parity-gate` skill: `tools/parity.py <serial> --run-actions`
+with the config repository's waivers file. Work every FAIL to a wired
+path or a waiver with evidence, ship, and run it again. Repeat until it
+exits 0 on three units of the model. The steps above are how you get
+there; the gate is what says you have.
+
+Report to the operator: the gate's last line for each unit, what was
+wired, each waiver with its evidence, and anything still unknown with
+what would settle it. Do not report a model as onboarded while the
+gate fails.
 
 ## Protocol note
 

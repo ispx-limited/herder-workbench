@@ -1,0 +1,375 @@
+{
+  "comment": "What reads each object a CPE exposes. The parity gate takes every leaf of a device's walked model, finds the first entry whose `paths` match it (regular expressions over the path with instance numbers written {i}), and asks whether anything reads it. `platform: false` marks an object Herder has no surface for: reported, never a failure. `expect` lists the leaves a surface cannot work without, so reading one leaf of an object does not pass the whole of it. A leaf no entry matches belongs to an object this file does not know, which is a finding until it is wired or waived. Order matters: first match wins. `informed: true` marks an object the CPE sends on every Inform, where a stored value counts as read.",
+  "features": [
+    {
+      "name": "Identity",
+      "paths": [
+        "\\.DeviceInfo\\.(Manufacturer|ManufacturerOUI|ModelName|ModelNumber|ProductClass|SerialNumber|HardwareVersion|SoftwareVersion|AdditionalHardwareVersion|AdditionalSoftwareVersion|Description|UpTime|ProvisioningCode|SpecVersion|FirstUseDate|DeviceCategory)$",
+        "\\.GatewayInfo\\."
+      ],
+      "surface": "Device status section and the device module.",
+      "expect": [
+        "\\.DeviceInfo\\.(Manufacturer|ProductClass|SerialNumber|HardwareVersion|SoftwareVersion|UpTime)$"
+      ],
+      "informed": true
+    },
+    {
+      "name": "Firmware image bank",
+      "paths": [
+        "\\.DeviceInfo\\.(FirmwareImage\\.|ActiveFirmwareImage|BootFirmwareImage|FirmwareImageNumberOfEntries)"
+      ],
+      "surface": "Firmware campaigns: the active and standby image, and why a boot failed.",
+      "expect": [
+        "FirmwareImage\\.\\{i\\}\\.(Version|Status|BootFailureLog)$",
+        "ActiveFirmwareImage$"
+      ]
+    },
+    {
+      "name": "CPU, memory and temperature",
+      "paths": [
+        "\\.DeviceInfo\\.(MemoryStatus|ProcessStatus\\.CPUUsage|TemperatureStatus|Processor)"
+      ],
+      "surface": "Monitoring: a TelemetryProfile and the dashboards over it.",
+      "expect": [
+        "MemoryStatus\\.(Free|Total)$",
+        "ProcessStatus\\.CPUUsage$",
+        "TemperatureSensor\\.\\{i\\}\\.Value$"
+      ]
+    },
+    {
+      "name": "Process table and device housekeeping",
+      "paths": [
+        "\\.DeviceInfo\\."
+      ],
+      "surface": "No platform surface: per-process rows, vendor config files, supported data model list.",
+      "platform": false
+    },
+    {
+      "name": "Management server",
+      "paths": [
+        "\\.ManagementServer\\."
+      ],
+      "surface": "Session control: connection request URL, inform interval, credentials.",
+      "expect": [
+        "ManagementServer\\.(ConnectionRequestURL|PeriodicInformInterval|PeriodicInformEnable)$"
+      ],
+      "informed": true
+    },
+    {
+      "name": "WAN addressing: gateway and DNS",
+      "paths": [
+        "\\.DHCPv4\\.Client\\.\\{i\\}\\.(IPRouters|DNSServers|DHCPServer|DHCPStatus|Status|IPAddress|SubnetMask|Interface|LeaseTimeRemaining|Alias|Enable)$",
+        "\\.Routing\\.Router\\.\\{i\\}\\.IPv4Forwarding\\.",
+        "\\.DNS\\.Client\\.",
+        "\\.PPP\\.Interface\\.\\{i\\}\\.(Status|ConnectionStatus|LastConnectionError|Username|IPCP\\.|Alias|Enable|LowerLayers|LastChange)",
+        "\\.Layer3Forwarding\\.",
+        "\\.WANIPConnection\\.\\{i\\}\\.(DefaultGateway|DNSServers|ExternalIPAddress|SubnetMask|ConnectionStatus|AddressingType|Uptime|MACAddress|Enable|Name|ConnectionType|LastConnectionError)$",
+        "\\.WANPPPConnection\\.\\{i\\}\\.(DefaultGateway|DNSServers|ExternalIPAddress|ConnectionStatus|Uptime|MACAddress|Username|Enable|Name|ConnectionType|LastConnectionError)$"
+      ],
+      "surface": "The wan module's default_gateway and dns_servers, and the connection's state.",
+      "expect": [
+        "(IPRouters|GatewayIPAddress|DefaultGateway|IPCP\\.RemoteIPAddress)$",
+        "(DNSServers|DNSServer)$"
+      ]
+    },
+    {
+      "name": "IP interfaces",
+      "paths": [
+        "\\.IP\\.Interface\\.",
+        "\\.IP\\.(IPv6Enable|IPv6Status|IPv4Enable|IPv4Status|IPv6Capable|IPv4Capable|ULAPrefix|InterfaceNumberOfEntries)$"
+      ],
+      "surface": "The wan module: status, address, mask, addressing type, uptime, and the IPv6 address and delegated prefix.",
+      "expect": [
+        "IP\\.Interface\\.\\{i\\}\\.(Status|LastChange|Alias)$",
+        "IPv4Address\\.\\{i\\}\\.(IPAddress|SubnetMask|AddressingType)$",
+        "IPv6Address\\.\\{i\\}\\.(IPAddress|Origin)$",
+        "IPv6Prefix\\.\\{i\\}\\.(Prefix|Origin)$"
+      ]
+    },
+    {
+      "name": "IPv6 WAN: DHCPv6 and router advertisements",
+      "paths": [
+        "\\.DHCPv6\\.",
+        "\\.RouterAdvertisement\\.",
+        "\\.NeighborDiscovery\\."
+      ],
+      "surface": "Monitoring: whether the home has a delegated prefix. A TelemetryProfile.",
+      "expect": [
+        "DHCPv6\\.Client\\.\\{i\\}\\.(Status|Interface)$"
+      ]
+    },
+    {
+      "name": "Diagnostics",
+      "paths": [
+        "\\.IP\\.Diagnostics\\.",
+        "\\.IPPingDiagnostics\\.",
+        "\\.TraceRouteDiagnostics\\.",
+        "\\.DownloadDiagnostics\\.",
+        "\\.UploadDiagnostics\\.",
+        "\\.UDPEchoConfig\\.",
+        "\\.DNS\\.Diagnostics\\.",
+        "\\.SelfTestDiagnostics\\.",
+        "\\.Capabilities\\.PerformanceDiagnostic\\."
+      ],
+      "surface": "Actions: ping, traceroute, DNS lookup, speed test, self test. Read on demand by the action, so nothing is expected between runs.",
+      "platform": false
+    },
+    {
+      "name": "Ethernet ports",
+      "paths": [
+        "\\.Ethernet\\.Interface\\.",
+        "\\.Ethernet\\.Link\\.",
+        "\\.LANEthernetInterfaceConfig\\.",
+        "\\.WANEthernetInterfaceConfig\\.",
+        "\\.Ethernet\\."
+      ],
+      "surface": "The lan module and the ports view: link state, rate, duplex, MAC, counters.",
+      "expect": [
+        "Ethernet\\.Interface\\.\\{i\\}\\.(Status|MACAddress|CurrentBitRate|Upstream|Alias|Name|LastChange)$",
+        "Ethernet\\.Interface\\.\\{i\\}\\.Stats\\.(BytesSent|BytesReceived|ErrorsSent|ErrorsReceived|DiscardPacketsSent|DiscardPacketsReceived)$",
+        "LANEthernetInterfaceConfig\\.\\{i\\}\\.(Status|MACAddress|MaxBitRate)$"
+      ]
+    },
+    {
+      "name": "Optical interface",
+      "paths": [
+        "\\.Optical\\.",
+        "\\.X_[A-Za-z0-9]+_GponInterfaceConfig\\.",
+        "\\.WANPONInterfaceConfig\\."
+      ],
+      "surface": "Monitoring: receive and transmit levels, bias, temperature. A TelemetryProfile; the experience score's WAN dimension can read it.",
+      "expect": [
+        "(OpticalSignalLevel|TransmitOpticalLevel|RXPower|TXPower)$",
+        "Optical\\.Interface\\.\\{i\\}\\.(Status|Upstream)$"
+      ]
+    },
+    {
+      "name": "Hosts",
+      "paths": [
+        "\\.Hosts\\."
+      ],
+      "surface": "Network map: every client's name, address and port.",
+      "expect": [
+        "Hosts\\.Host\\.\\{i\\}\\.(PhysAddress|MACAddress)$",
+        "Hosts\\.Host\\.\\{i\\}\\.(HostName|IPAddress|Active|Layer1Interface|InterfaceType)$"
+      ]
+    },
+    {
+      "name": "WiFi neighbour scan",
+      "paths": [
+        "\\.WiFi\\.NeighboringWiFiDiagnostic\\.",
+        "\\.X_[A-Za-z0-9]+_.*(Scan|Survey|Neighbor)"
+      ],
+      "surface": "The wifi_scan action. Read on demand by the action.",
+      "platform": false
+    },
+    {
+      "name": "Mesh: EasyMesh and Data Elements",
+      "paths": [
+        "\\.WiFi\\.DataElements\\.",
+        "\\.WiFi\\.MultiAP\\.",
+        "\\.IEEE1905\\."
+      ],
+      "surface": "Network map: extenders, their backhaul link and signal, and the clients behind them.",
+      "expect": [
+        "DataElements\\.Network\\.Device\\.\\{i\\}\\.(ID|Manufacturer|SerialNumber|SoftwareVersion|ManufacturerModel)$",
+        "MultiAPDevice\\.Backhaul\\.(LinkType|MACAddress|BackhaulMACAddress)$",
+        "MultiAPDevice\\.Backhaul\\.Stats\\.(SignalStrength|LastDataDownlinkRate|LastDataUplinkRate)$",
+        "MultiAP\\.APDevice\\.\\{i\\}\\.(MACAddress|SerialNumber|BackhaulSignalStrength|BackhaulLinkType)$"
+      ]
+    },
+    {
+      "name": "WiFi clients",
+      "paths": [
+        "\\.AssociatedDevice\\.",
+        "\\.AccessPoint\\.\\{i\\}\\.AssociatedDeviceNumberOfEntries$",
+        "\\.TotalAssociations$"
+      ],
+      "surface": "Per-client signal and rates, the experience score, the network map.",
+      "expect": [
+        "AssociatedDevice\\.\\{i\\}\\.(MACAddress|AssociatedDeviceMACAddress)$",
+        "AssociatedDevice\\.\\{i\\}\\.(SignalStrength|LastDataDownlinkRate|LastDataUplinkRate)$"
+      ]
+    },
+    {
+      "name": "WiFi radios, SSIDs and access points",
+      "paths": [
+        "\\.WiFi\\.",
+        "\\.WLANConfiguration\\."
+      ],
+      "surface": "The wifi module and section: radios, channels, widths, SSIDs, security, airtime.",
+      "expect": [
+        "WiFi\\.Radio\\.\\{i\\}\\.(Enable|Status|Channel|OperatingFrequencyBand|OperatingChannelBandwidth|AutoChannelEnable|TransmitPower|SupportedStandards|OperatingStandards)$",
+        "WiFi\\.Radio\\.\\{i\\}\\.Stats\\.(BytesSent|BytesReceived|ErrorsSent|Noise)$",
+        "WiFi\\.SSID\\.\\{i\\}\\.(SSID|BSSID|Status|Enable|LowerLayers)$",
+        "WiFi\\.AccessPoint\\.\\{i\\}\\.(SSIDReference|Enable|Status|Security\\.ModeEnabled)$",
+        "WLANConfiguration\\.\\{i\\}\\.(SSID|BSSID|Channel|Enable|Status|BeaconType)$"
+      ]
+    },
+    {
+      "name": "Port forwards",
+      "paths": [
+        "\\.NAT\\.",
+        "\\.PortMapping\\."
+      ],
+      "surface": "The port-forwards module.",
+      "expect": [
+        "PortMapping\\.\\{i\\}\\.(Enable|ExternalPort|InternalPort|InternalClient|Protocol)$"
+      ]
+    },
+    {
+      "name": "Remote access and accounts",
+      "paths": [
+        "\\.UserInterface\\.",
+        "\\.Users\\.",
+        "\\.X_[A-Za-z0-9]+_RemoteAccess"
+      ],
+      "surface": "The remote-access module: enable, port, protocol, the account, allow-list.",
+      "expect": [
+        "UserInterface\\.RemoteAccess\\.(Enable|Port|Protocol)$"
+      ]
+    },
+    {
+      "name": "Voice",
+      "paths": [
+        "\\.Services\\.VoiceService\\."
+      ],
+      "surface": "The voice module and section: line state, registration, call state, call statistics.",
+      "expect": [
+        "Line\\.\\{i\\}\\.(Enable|Status|CallState|DirectoryNumber)$",
+        "Line\\.\\{i\\}\\.Stats\\.(CallsDropped|IncomingCallsFailed|OutgoingCallsFailed|ReceivePacketLossRate|AverageRoundTripDelay)$"
+      ]
+    },
+    {
+      "name": "Software modules",
+      "paths": [
+        "\\.SoftwareModules\\."
+      ],
+      "surface": "Apps: execution environments, deployment units, execution units.",
+      "expect": [
+        "ExecutionUnit\\.\\{i\\}\\.(Name|Status)$"
+      ]
+    },
+    {
+      "name": "XMPP connection requests",
+      "paths": [
+        "\\.XMPP\\."
+      ],
+      "surface": "Reaching a CPE behind NAT. Written by provisioning, so nothing is expected to be read.",
+      "platform": false
+    },
+    {
+      "name": "Bulk data",
+      "paths": [
+        "\\.BulkData\\."
+      ],
+      "surface": "Out of band collection. Configured by provisioning.",
+      "platform": false
+    },
+    {
+      "name": "Time",
+      "paths": [
+        "\\.Time\\."
+      ],
+      "surface": "Monitoring and compliance: a CPE whose clock is not synchronised.",
+      "expect": [
+        "Time\\.(Status|NTPServer1)$"
+      ]
+    },
+    {
+      "name": "DHCP server and leases",
+      "paths": [
+        "\\.DHCPv4\\.Server\\.",
+        "\\.DHCPv4\\.Relay\\.",
+        "\\.DHCPv6\\.Server\\.",
+        "\\.LANHostConfigManagement\\.",
+        "\\.DHCPv4\\."
+      ],
+      "surface": "No platform surface: the LAN's DHCP pool. Hosts carries the leases the map needs.",
+      "platform": false
+    },
+    {
+      "name": "DSL",
+      "paths": [
+        "\\.DSL\\.",
+        "\\.WANDSLInterfaceConfig\\.",
+        "\\.FAST\\."
+      ],
+      "surface": "Monitoring: sync rates, margins, error counters. The dsl_line_test action.",
+      "expect": [
+        "(DownstreamCurrRate|UpstreamCurrRate|DownstreamNoiseMargin|UpstreamNoiseMargin)$"
+      ]
+    },
+    {
+      "name": "Cellular",
+      "paths": [
+        "\\.Cellular\\."
+      ],
+      "surface": "Monitoring: signal, access technology, operator.",
+      "expect": [
+        "Cellular\\.Interface\\.\\{i\\}\\.(Status|RSSI|RSRP|CurrentAccessTechnology)$"
+      ]
+    },
+    {
+      "name": "Routing, DNS and remaining WAN plumbing",
+      "paths": [
+        "\\.Routing\\.",
+        "\\.DNS\\.",
+        "\\.PPP\\.",
+        "\\.WANDevice\\.",
+        "\\.IP\\."
+      ],
+      "surface": "No platform surface beyond the WAN entries above.",
+      "platform": false
+    },
+    {
+      "name": "LAN-side services with no platform surface",
+      "paths": [
+        "\\.Firewall\\.",
+        "\\.QoS\\.",
+        "\\.UPnP\\.",
+        "\\.DLNA\\.",
+        "\\.Bridging\\.",
+        "\\.InterfaceStack",
+        "\\.USB\\.",
+        "\\.DynamicDNS\\.",
+        "\\.IPsec\\.",
+        "\\.CaptivePortal\\.",
+        "\\.PeriodicStatistics\\.",
+        "\\.MQTT\\.",
+        "\\.IEEE8021x\\.",
+        "\\.LANConfigSecurity\\.",
+        "\\.Security\\.",
+        "\\.GRE\\.",
+        "\\.L2TPv3\\.",
+        "\\.VXLAN\\.",
+        "\\.MAP\\.",
+        "\\.DSLite\\.",
+        "\\.IPv6rd\\.",
+        "\\.PCP\\.",
+        "\\.LLDP\\.",
+        "\\.HPNA\\.",
+        "\\.MoCA\\.",
+        "\\.Ghn\\.",
+        "\\.HomePlug\\.",
+        "\\.UPA\\.",
+        "\\.ETSIM2M\\.",
+        "\\.FaultMgmt\\.",
+        "\\.FAP\\.",
+        "\\.Services\\.StorageService\\.",
+        "\\.RootDataModelVersion$",
+        "\\.DeviceSummary$",
+        "\\.LANDeviceNumberOfEntries$",
+        "\\.WANDeviceNumberOfEntries$",
+        "\\.LANDevice\\.",
+        "\\.Layer2Bridging\\.",
+        "\\.QueueManagement\\.",
+        "\\.LANInterfaces\\.",
+        "\\.DeviceConfig\\.",
+        "\\.Capabilities\\."
+      ],
+      "surface": "No platform surface.",
+      "platform": false
+    }
+  ]
+}
