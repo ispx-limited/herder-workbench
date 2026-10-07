@@ -92,6 +92,12 @@ platform ones is the shipped shape. Verify with
 `GET /api/v1/devices/<device_id>/topology` after a session that
 carried the mesh paths: the node count is the mesh table's, not one.
 
+An extender that runs its own management client is a second device
+with a page of its own, and the map has to be the same from both.
+That is `home-links`: what ties the two together, the traps a wireless
+backhaul sets, and the check to run across the fleet before and after
+any change here.
+
 ## 5. The neighbour scan
 
 Vendors without `Device.WiFi.NeighboringWiFiDiagnostic` hide the site

@@ -42,6 +42,7 @@ yourself.
 | `.claude/skills/survey-datamodel/` | Discover and summarize what a device exposes |
 | `.claude/skills/mapping-gaps/` | Coverage gaps to mapping-table skeletons |
 | `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
+| `.claude/skills/home-links/` | Extenders linked to their gateways, one map per home, and a script that checks every home on an instance |
 | `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
 | `tools/parity.py` | The parity gate: one device's walked model against what Herder reads, maps and shows. Exits 1 while anything is missing |
 | `.claude/skills/parity-gate/` | Running the gate and working each finding to a wired path or a waiver with evidence |
