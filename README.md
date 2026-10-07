@@ -8,7 +8,8 @@ point an agent at it (the `CLAUDE.md` and the skills under
 `.claude/skills/` are its instructions), and it walks the integration:
 survey what the device exposes, read which platform features lack
 bindings, write the `vendors/` directory, validate every buffer against
-the live API, ship by Git.
+the live API, ship by Git, and keep going until the parity gate
+passes.
 
 Everything here also works without an agent. The skills are plain
 markdown; each step is an API call or a file you can run and write
@@ -42,6 +43,8 @@ yourself.
 | `.claude/skills/mapping-gaps/` | Coverage gaps to mapping-table skeletons |
 | `.claude/skills/wifi-experience/` | Per-client signal, the network map, the neighbour scan |
 | `.claude/skills/firmware-readiness/` | Making a model safe to name in a firmware campaign |
+| `tools/parity.py` | The parity gate: one device's walked model against what Herder reads, maps and shows. Exits 1 while anything is missing |
+| `.claude/skills/parity-gate/` | Running the gate and working each finding to a wired path or a waiver with evidence |
 | `.claude/skills/surface-audit/` | Every section of the device page checked across several units |
 | `.claude/skills/deployment-audit/` | A running deployment checked across its whole fleet: config sources, the desk's actions, reachability, firmware and advisories |
 | `.claude/skills/migrate-genieacs/` | Porting GenieACS provisions, presets and virtual parameters to Herder rules, scripts and mappings |
