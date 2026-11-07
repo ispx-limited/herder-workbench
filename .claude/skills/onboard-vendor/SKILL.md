@@ -307,7 +307,7 @@ Then each feature, against the device, not against the files:
 | Interfaces | `POST /api/v1/devices/<id>/canonical-resolve` with `{"patterns": ["canonical.interface.wan.*", "canonical.interface.lan.*"], "include_values": true}` resolves to the upstream port's paths and values |
 | Monitoring | the vendor paths appear in `GET /api/v1/devices/<id>/parameters?search=X_` after a session |
 | WiFi clients | `GET /api/v1/devices/<id>/labeled-telemetry?metric=wifi.client.rssi` has rows (allow an inform cycle) |
-| Network map | `GET /api/v1/devices/<id>/topology` lists the nodes and edges the mesh table describes |
+| Network map | `GET /api/v1/devices/<id>/topology` lists the nodes and edges the mesh table describes, and a phone joining and leaving moves on it as `wifi-experience` "Prove the map with a real client" describes |
 | WiFi scan | `POST /api/v1/devices/<id>/actions/wifi_scan` is 202; `GET /api/v1/action-runs/<run_id>` walks to completed with a neighbour count |
 | Port forwards | `GET /api/v1/devices/<id>/modules/port-forwards` resolves every field; a `POST .../collections/port_forward` with `{"fields": {...}}` lands as a new instance in the parameters |
 | Remote access | `GET /api/v1/devices/<id>/modules/remote-access` resolves the fields the vendor table added |
