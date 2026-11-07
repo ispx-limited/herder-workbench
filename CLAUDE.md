@@ -97,6 +97,13 @@ advisories (skill: `deployment-audit`).
 - Baseline files stay vendor-neutral; vendor behaviour goes in
   `vendors/<name>/` with a selector narrow enough not to capture other
   hardware, at priority 50 or higher.
+- A quirk the hardware shows is fixed where the next vendor benefits.
+  When it is a reasonable reading of the standard (a path reference
+  without its `Device.` prefix, an empty table reported as a zero
+  count), make the shared platform rule accept it, vendor-neutrally.
+  When it is this vendor's own behaviour, it goes in `vendors/<name>/`
+  with a comment naming the firmware that does it. Either way the
+  knowledge lives in the config repository, not in the session.
 - Validate before you commit. A buffer the API rejects is not done.
 - Never report a model as onboarded, done or working while
   `tools/parity.py` fails for it. Say what the gate says.

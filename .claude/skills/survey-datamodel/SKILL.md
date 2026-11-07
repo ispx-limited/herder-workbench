@@ -272,9 +272,53 @@ and bidirectional, so there are no connection requests, no inform
 intervals to wait out, and tasks deliver immediately. Discovery is
 native: the agent itself reports its supported data model
 (GetSupportedDM), so the manual walk fallback is a CWMP concern that
-does not arise. USP trees are always `Device.*` (TR-181). These notes
-are grounded in the platform's USP dispatch, not yet in a live
-workbench run; treat them as the map, not the territory.
+does not arise. USP trees are always `Device.*` (TR-181).
+
+A dual-stack device walked over CWMP has a model with no commands and
+no events in it: only a USP walk (GetSupportedDM) records them. Trigger
+discovery while the device is on USP if its subscriptions name events
+(`DUStateChange!`) or commands (`InstallDU()`); until then Herder can
+only judge those by their object.
+
+### What a real TR-369 agent did
+
+Each of these was found on production firmware over USP. Look for
+every one on a new agent; none is in its data model document.
+
+- **Path references written relative.** `AccessPoint.{i}.SSIDReference`
+  read `WiFi.SSID.5`, not `Device.WiFi.SSID.5`. The platform topology
+  rule accepts both; a vendor rule you write must too.
+- **ObjectCreation with no unique keys.** The notification names the
+  new row and nothing else, so the row's contents arrive with the next
+  report, not with the event.
+- **ValueChange honoured on a counter.** A subscription on a value
+  that changes every second (`LastChange`, a byte counter) is not
+  ignored but notified on every check, every few seconds, for the life
+  of the session. Counters belong in a `sampled:` block, never in
+  `subscriptions:`.
+- **Bulk data switched off.** `Device.BulkData.Enable` shipped `0`.
+  Herder switches it on when a profile is wanted; confirm reports then
+  arrive (`labeled-telemetry` or `parameters` rows with recent times).
+- **Bulk data bounds.** Read `Device.BulkData.MinReportingInterval`,
+  `MaxNumberOfProfiles`, `MaxNumberOfParameterReferences` and the
+  allowed range of `NumberOfRetainedFailedReports` (one agent took only
+  `-1..3`). A value outside them, or one reference the agent will not
+  accept, refuses the whole profile; the failed task's `error_message`
+  names it. A search path over a table with no rows
+  (`WiFi.EndPoint.*.Status` on a gateway) was refused where the object
+  path (`Device.WiFi.EndPoint.`) was accepted.
+- **MQTT client defaults.** An agent defaulted its MQTT client to
+  protocol 5.0 and its publish QoS to 2. Check
+  `Device.MQTT.Client.{i}.ProtocolVersion` and
+  `Device.LocalAgent.MTP.{i}.MQTT.PublishQoS` against what the
+  deployment's broker accepts before blaming the session.
+- **Host table lag.** A client that left stayed `Active` in
+  `Hosts.Host` for minutes, and one that joined had no host row until
+  DHCP answered. The association table is the authority for who is on
+  WiFi now.
+- **Hidden plumbing.** A hidden SSID with no clients (a random-hex mesh
+  backhaul VAP) sat beside the subscriber's networks. The platform
+  topology rule leaves it off the map.
 
 Record the agent's endpoint ID. Herder reads the `oui` selector label
 from it only for the schemes that carry one: `oui:<OUI>:<instance-id>`,

@@ -92,6 +92,46 @@ platform ones is the shipped shape. Verify with
 `GET /api/v1/devices/<device_id>/topology` after a session that
 carried the mesh paths: the node count is the mesh table's, not one.
 
+### Prove the map with a real client
+
+A map that matches the mesh table can still be wrong for the one thing
+a support agent uses it for: where a client is right now. Prove it on
+the unit with a phone, while watching:
+
+```bash
+curl -sN -H "Authorization: Bearer $HERDER_TOKEN" \
+  "$HERDER_API/api/v1/events/stream?topics=device.topology&device_id=<device_id>"
+```
+
+That stream is what the device page holds, and on a USP device it makes
+the device live: the `baseline/usp/topology-live.yaml` block
+(`whileWatched: true`) goes on the agent and it pushes the map every few
+seconds. Join a phone to each SSID in turn, then take it off. Each
+change should arrive as a `device.topology.updated` frame within
+seconds; read `GET /api/v1/devices/<device_id>/topology` after each and
+check:
+
+- The client's edge has its SSID node (that SSID's BSSID) as parent and
+  a band type (`wifi_2g`, `wifi_5g`, `wifi_6g`), never `other` and never
+  hung straight off the gateway.
+- It carries its hostname once the host table has it.
+- It is gone from the map after it leaves, whatever the host table
+  still says.
+- No hidden, idle SSID is drawn as a node.
+
+When it is wrong, find out why on the stored state rather than by
+guessing: `POST /api/v1/topology/preview` runs a rule, with a modified
+`script_body` if you give one, against the device's current parameters
+and returns the graph it would draw. Fix it by the quirk rule in
+CLAUDE.md. A TR-069 device's map moves only when a session brings new
+values, so there the same check runs across sessions, not seconds.
+
+Signal colours come from the device's RFPolicy `clientSignal`, five
+levels per band, with a built-in scale where no policy sets one; the
+topology response carries it as `signal_scale`. A vendor whose radio
+reports signal in another encoding is mapped to dBm in its rule, never
+graded on a scale of its own.
+
 An extender that runs its own management client is a second device
 with a page of its own, and the map has to be the same from both.
 That is `home-links`: what ties the two together, the traps a wireless
@@ -136,8 +176,14 @@ the existing scan profiles do.
 
 ## USP note
 
-On USP devices telemetry is subscription-driven rather than polled:
-the profile shape differs, and `baseline/usp/wifi-realtime.yaml` in
-the config repo is the worked example to model on. The client-table
-hunt, the vendor-extension search, and the idle-client zeros trap
-apply unchanged.
+On USP devices telemetry is pushed rather than polled. Events (a client
+joining, a channel moving) are subscriptions, and
+`baseline/usp/wifi-realtime.yaml` in the config repo is the worked
+example. Values that move continuously (signal, rates, counters) are a
+`sampled:` block, the agent pushing them as a Bulk Data report, as in
+`baseline/usp/wifi-sampled.yaml`; a subscription on them is either
+ignored or a notification every few seconds. A block that is only
+worth its cost while someone is looking takes `whileWatched: true`, the
+way `baseline/usp/topology-live.yaml` does for the map. The
+client-table hunt, the vendor-extension search, and the idle-client
+zeros trap apply unchanged.
